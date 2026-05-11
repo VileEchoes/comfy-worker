@@ -10,6 +10,8 @@ def setup_model_links():
         "/comfyui/models/ipadapter": "/runpod-volume/models/ipadapter",
     }
 
+    print("RUNPOD ROOT:", os.listdir("/runpod-volume"))
+
     for link, target in links.items():
         try:
             if os.path.exists(link) or os.path.islink(link):
