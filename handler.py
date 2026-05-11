@@ -3,12 +3,22 @@ import json, time, base64, os, requests, uuid, subprocess
 
 COMFY_URL = "http://127.0.0.1:8188"
 
+def setup_model_links():
+    links = {
+        "/comfyui/models/checkpoints": "/runpod-volume/models/checkpoints",
+        "/comfyui/models/clip_vision": "/runpod-volume/models/clip_vision",
+        "/comfyui/models/ipadapter": "/runpod-volume/models/ipadapter",
+    }
+    for link, target in links.items():
+        if not os.path.exists(link):
+            os.symlink(target, link)
+            print(f"✅ Linked {link} → {target}")
+
 def start_comfy():
     subprocess.Popen([
         "python", "/comfyui/main.py",
         "--listen", "127.0.0.1",
-        "--port", "8188",
-        "--extra-model-paths-config", "/extra_model_paths.yaml"
+        "--port", "8188"
     ])
 
 def wait_for_comfy(timeout=90):
@@ -54,26 +64,22 @@ def get_images(result):
 def inject_inputs(workflow, job_input):
     wf = json.loads(json.dumps(workflow))
 
-    # Positive prompt
     if "prompt" in job_input:
         wf["3"]["inputs"]["text"] = job_input["prompt"]
 
-    # Negative prompt
     if "negative_prompt" in job_input:
         wf["2"]["inputs"]["text"] = job_input["negative_prompt"]
 
-    # Seed
     if "seed" in job_input:
         wf["6"]["inputs"]["seed"] = job_input["seed"]
 
-    # Reference image for IPAdapter
     if "reference_image" in job_input:
         img_data = base64.b64decode(job_input["reference_image"])
         filename = f"ref_{uuid.uuid4().hex}.png"
         img_path = f"/comfyui/input/{filename}"
         with open(img_path, "wb") as f:
             f.write(img_data)
-        wf["9"]["inputs"]["image"] = filename  # just filename, not full path
+        wf["9"]["inputs"]["image"] = filename
 
     return wf
 
@@ -81,6 +87,7 @@ def inject_inputs(workflow, job_input):
 with open("/workflow.json") as f:
     BASE_WORKFLOW = json.load(f)
 
+setup_model_links()
 start_comfy()
 wait_for_comfy()
 
