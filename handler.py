@@ -4,30 +4,17 @@ import json, time, base64, os, requests, uuid, subprocess
 COMFY_URL = "http://127.0.0.1:8188"
 
 def setup_model_links():
-    links = {
-        "/comfyui/models/checkpoints": "/runpod-volume/models/checkpoints",
-        "/comfyui/models/clip_vision": "/runpod-volume/models/clip_vision",
-        "/comfyui/models/ipadapter": "/runpod-volume/models/ipadapter",
-    }
+    print("=== DEBUGGING RUNPOD VOLUME ===")
 
-    print("RUNPOD ROOT:", os.listdir("/runpod-volume"))
+    print("RUNPOD EXISTS:", os.path.exists("/runpod-volume"))
 
-    for link, target in links.items():
-        try:
-            if os.path.exists(link) or os.path.islink(link):
-                os.system(f"rm -rf {link}")
+    if os.path.exists("/runpod-volume"):
+        print("ROOT CONTENTS:")
+        print(os.listdir("/runpod-volume"))
 
-            os.symlink(target, link)
+    os.system("find /runpod-volume -maxdepth 3")
 
-            print(f"✅ Linked {link} → {target}")
-
-            if os.path.exists(target):
-                print(f"FILES IN {target}: {os.listdir(target)}")
-            else:
-                print(f"TARGET MISSING: {target}")
-
-        except Exception as e:
-            print(f"❌ Failed linking {link}: {e}")
+    raise Exception("DEBUG STOP")
 
 def start_comfy():
     subprocess.Popen([
