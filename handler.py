@@ -4,17 +4,26 @@ import json, time, base64, os, requests, uuid, subprocess
 COMFY_URL = "http://127.0.0.1:8188"
 
 def setup_model_links():
-    print("=== DEBUGGING RUNPOD VOLUME ===")
-
-    print("RUNPOD EXISTS:", os.path.exists("/runpod-volume"))
-
-    if os.path.exists("/runpod-volume"):
-        print("ROOT CONTENTS:")
-        print(os.listdir("/runpod-volume"))
-
-    os.system("find /runpod-volume -maxdepth 3")
-
-    raise Exception("DEBUG STOP")
+    print("=== Setting up model symlinks ===")
+    
+    # Link models from network volume to ComfyUI paths
+    models = {
+        "/runpod-volume/checkpoints": "/comfyui/models/checkpoints",
+        "/runpod-volume/clip_vision": "/comfyui/models/clip_vision", 
+        "/runpod-volume/ipadapter": "/comfyui/models/ipadapter"
+    }
+    
+    for src, dst in models.items():
+        if os.path.exists(src):
+            # Remove existing dir and create symlink
+            if os.path.exists(dst):
+                os.system(f"rm -rf {dst}")
+            os.symlink(src, dst)
+            print(f"✅ Linked {src} -> {dst}")
+        else:
+            print(f"⚠️ Source not found: {src}")
+    
+    # DON'T raise Exception here!
 
 def start_comfy():
     subprocess.Popen([
