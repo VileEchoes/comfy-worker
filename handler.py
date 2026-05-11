@@ -6,27 +6,35 @@ COMFY_URL = "http://127.0.0.1:8188"
 def setup_model_links():
     print("=== DEBUGGING VOLUME MOUNT ===")
     
-    # Use /workspace instead of /runpod-volume
-    volume_path = "/workspace"
+    # Potential volume paths
+    volume_paths = ["/runpod-volume", "/workspace"]
     
-    print(f"📂 Contents of {volume_path}:")
-    try:
-        items = os.listdir(volume_path)
-        for item in items:
-            full_path = os.path.join(volume_path, item)
-            if os.path.isdir(full_path):
-                print(f"  📁 {item}/")
-            else:
-                print(f"  📄 {item}")
-    except Exception as e:
-        print(f"  ❌ Error: {e}")
+    for volume_path in volume_paths:
+        print(f"📂 Contents of {volume_path}:")
+        try:
+            items = os.listdir(volume_path)
+            for item in items:
+                full_path = os.path.join(volume_path, item)
+                if os.path.isdir(full_path):
+                    print(f"  📁 {item}/")
+                else:
+                    print(f"  📄 {item}")
+        except Exception as e:
+            print(f"  ❌ Error: {e}")
     
     # Create symlinks to ComfyUI model paths
     models_map = {
-        "/workspace/checkpoints": "/comfyui/models/checkpoints",
-        "/workspace/clip_vision": "/comfyui/models/clip_vision",
-        "/workspace/ipadapter": "/comfyui/models/ipadapter"
+        f"{volume_path}/checkpoints": "/comfyui/models/checkpoints"
+        for volume_path in volume_paths
     }
+    models_map.update({
+        f"{volume_path}/clip_vision": "/comfyui/models/clip_vision"
+        for volume_path in volume_paths
+    })
+    models_map.update({
+        f"{volume_path}/ipadapter": "/comfyui/models/ipadapter"
+        for volume_path in volume_paths
+    })
     
     for src, dst in models_map.items():
         if os.path.exists(src):
