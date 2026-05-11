@@ -30,10 +30,20 @@ def setup_model_links():
     
     for src, dst in models_map.items():
         if os.path.exists(src):
+            # Ensure destination directory exists
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            
+            # Remove existing symlink or directory
             if os.path.exists(dst):
-                os.system(f"rm -rf {dst}")
+                if os.path.islink(dst) or os.path.isfile(dst):
+                    os.unlink(dst)
+                else:
+                    os.system(f"rm -rf {dst}")
+            
+            # Create symlink
             os.symlink(src, dst)
             print(f"✅ Linked {src} -> {dst}")
+
 
 def start_comfy():
     subprocess.Popen([
