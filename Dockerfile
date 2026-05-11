@@ -1,5 +1,7 @@
 FROM runpod/pytorch:2.2.0-py3.10-cuda12.1.1-devel-ubuntu22.04
 
+RUN apt-get update && apt-get install -y git
+
 # Install ComfyUI
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui && \
     cd /comfyui && \
