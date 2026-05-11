@@ -1,7 +1,8 @@
-FROM runpod/pytorch:2.2.0-py3.10-cuda12.1.1-devel-ubuntu22.04
+FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 
-# Fix numpy compatibility
-RUN pip install "numpy<2" --no-cache-dir
+# Fix numpy and remove conflicting package
+RUN pip uninstall comfy_kitchen -y || true && \
+    pip install "numpy<2" --no-cache-dir
 
 # Install ComfyUI pinned to stable version
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui && \
