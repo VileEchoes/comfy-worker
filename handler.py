@@ -9,10 +9,18 @@ def setup_model_links():
         "/comfyui/models/clip_vision": "/runpod-volume/models/clip_vision",
         "/comfyui/models/ipadapter": "/runpod-volume/models/ipadapter",
     }
+
     for link, target in links.items():
-        if not os.path.exists(link):
+        try:
+            if os.path.exists(link) or os.path.islink(link):
+                os.system(f"rm -rf {link}")
+
             os.symlink(target, link)
+
             print(f"✅ Linked {link} → {target}")
+
+        except Exception as e:
+            print(f"❌ Failed linking {link}: {e}")
 
 def start_comfy():
     subprocess.Popen([
