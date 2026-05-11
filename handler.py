@@ -4,26 +4,27 @@ import json, time, base64, os, requests, uuid, subprocess
 COMFY_URL = "http://127.0.0.1:8188"
 
 def setup_model_links():
-    print("=== Setting up model symlinks ===")
+    print("=== DEBUGGING VOLUME MOUNT ===")
     
-    # Link models from network volume to ComfyUI paths
-    models = {
-        "/runpod-volume/checkpoints": "/comfyui/models/checkpoints",
-        "/runpod-volume/clip_vision": "/comfyui/models/clip_vision", 
-        "/runpod-volume/ipadapter": "/comfyui/models/ipadapter"
-    }
+    # Check common mount points
+    for path in ["/runpod-volume", "/workspace", "/"]:
+        if os.path.exists(path):
+            print(f"\n📂 Contents of {path}:")
+            try:
+                items = os.listdir(path)
+                for item in items[:20]:  # First 20 items
+                    full_path = os.path.join(path, item)
+                    if os.path.isdir(full_path):
+                        print(f"  📁 {item}/")
+                    else:
+                        print(f"  📄 {item}")
+            except Exception as e:
+                print(f"  ❌ Error: {e}")
     
-    for src, dst in models.items():
-        if os.path.exists(src):
-            # Remove existing dir and create symlink
-            if os.path.exists(dst):
-                os.system(f"rm -rf {dst}")
-            os.symlink(src, dst)
-            print(f"✅ Linked {src} -> {dst}")
-        else:
-            print(f"⚠️ Source not found: {src}")
-    
-    # DON'T raise Exception here!
+    # Try to find your models
+    print("\n🔍 Searching for model files...")
+    os.system("find / -name '*ponyDiffusion*.safetensors' 2>/dev/null | head -5")
+    os.system("find / -name 'ip-adapter*.bin' 2>/dev/null | head -5")
 
 def start_comfy():
     subprocess.Popen([
