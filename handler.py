@@ -6,25 +6,34 @@ COMFY_URL = "http://127.0.0.1:8188"
 def setup_model_links():
     print("=== DEBUGGING VOLUME MOUNT ===")
     
-    # Check common mount points
-    for path in ["/runpod-volume", "/workspace", "/"]:
-        if os.path.exists(path):
-            print(f"\n📂 Contents of {path}:")
-            try:
-                items = os.listdir(path)
-                for item in items[:20]:  # First 20 items
-                    full_path = os.path.join(path, item)
-                    if os.path.isdir(full_path):
-                        print(f"  📁 {item}/")
-                    else:
-                        print(f"  📄 {item}")
-            except Exception as e:
-                print(f"  ❌ Error: {e}")
+    # Use /workspace instead of /runpod-volume
+    volume_path = "/workspace"
     
-    # Try to find your models
-    print("\n🔍 Searching for model files...")
-    os.system("find / -name '*ponyDiffusion*.safetensors' 2>/dev/null | head -5")
-    os.system("find / -name 'ip-adapter*.bin' 2>/dev/null | head -5")
+    print(f"📂 Contents of {volume_path}:")
+    try:
+        items = os.listdir(volume_path)
+        for item in items:
+            full_path = os.path.join(volume_path, item)
+            if os.path.isdir(full_path):
+                print(f"  📁 {item}/")
+            else:
+                print(f"  📄 {item}")
+    except Exception as e:
+        print(f"  ❌ Error: {e}")
+    
+    # Create symlinks to ComfyUI model paths
+    models_map = {
+        "/workspace/checkpoints": "/comfyui/models/checkpoints",
+        "/workspace/clip_vision": "/comfyui/models/clip_vision",
+        "/workspace/ipadapter": "/comfyui/models/ipadapter"
+    }
+    
+    for src, dst in models_map.items():
+        if os.path.exists(src):
+            if os.path.exists(dst):
+                os.system(f"rm -rf {dst}")
+            os.symlink(src, dst)
+            print(f"✅ Linked {src} -> {dst}")
 
 def start_comfy():
     subprocess.Popen([
