@@ -19,6 +19,11 @@ def setup_model_links():
 
             print(f"✅ Linked {link} → {target}")
 
+            if os.path.exists(target):
+                print(f"FILES IN {target}: {os.listdir(target)}")
+            else:
+                print(f"TARGET MISSING: {target}")
+
         except Exception as e:
             print(f"❌ Failed linking {link}: {e}")
 
