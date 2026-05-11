@@ -1,0 +1,168 @@
+{
+    "1": {
+        "inputs": {
+            "ckpt_name": "ponyDiffusionV6XL_v6StartWithThisOne.safetensors"
+        },
+        "class_type": "CheckpointLoaderSimple",
+        "_meta": {
+            "title": "Load Checkpoint"
+        }
+    },
+    "2": {
+        "inputs": {
+            "text": "",
+            "clip": [
+                "1",
+                1
+            ]
+        },
+        "class_type": "CLIPTextEncode",
+        "_meta": {
+            "title": "negative"
+        }
+    },
+    "3": {
+        "inputs": {
+            "text": "",
+            "clip": [
+                "1",
+                1
+            ]
+        },
+        "class_type": "CLIPTextEncode",
+        "_meta": {
+            "title": "positive"
+        }
+    },
+    "5": {
+        "inputs": {
+            "width": 1024,
+            "height": 1024,
+            "batch_size": 1
+        },
+        "class_type": "EmptyLatentImage",
+        "_meta": {
+            "title": "Empty Latent Image"
+        }
+    },
+    "6": {
+        "inputs": {
+            "seed": 948937087718307,
+            "steps": 32,
+            "cfg": 6.3,
+            "sampler_name": "dpmpp_2m_sde",
+            "scheduler": "karras",
+            "denoise": 0.95,
+            "model": [
+                "15",
+                0
+            ],
+            "positive": [
+                "3",
+                0
+            ],
+            "negative": [
+                "2",
+                0
+            ],
+            "latent_image": [
+                "5",
+                0
+            ]
+        },
+        "class_type": "KSampler",
+        "_meta": {
+            "title": "KSampler"
+        }
+    },
+    "7": {
+        "inputs": {
+            "tile_size": 512,
+            "overlap": 64,
+            "temporal_size": 64,
+            "temporal_overlap": 8,
+            "samples": [
+                "6",
+                0
+            ],
+            "vae": [
+                "1",
+                2
+            ]
+        },
+        "class_type": "VAEDecodeTiled",
+        "_meta": {
+            "title": "VAE Decode (Tiled)"
+        }
+    },
+    "8": {
+        "inputs": {
+            "filename_prefix": "ComfyUI",
+            "images": [
+                "7",
+                0
+            ]
+        },
+        "class_type": "SaveImage",
+        "_meta": {
+            "title": "Save Image"
+        }
+    },
+    "9": {
+        "inputs": {
+            "image": "test3.png"
+        },
+        "class_type": "LoadImage",
+        "_meta": {
+            "title": "Load Image"
+        }
+    },
+    "12": {
+        "inputs": {
+            "clip_name": "model.safetensors"
+        },
+        "class_type": "CLIPVisionLoader",
+        "_meta": {
+            "title": "Load CLIP Vision"
+        }
+    },
+    "14": {
+        "inputs": {
+            "ipadapter_file": "ip-adapter_sdxl_vit-h.bin"
+        },
+        "class_type": "IPAdapterModelLoader",
+        "_meta": {
+            "title": "IPAdapter Model Loader"
+        }
+    },
+    "15": {
+        "inputs": {
+            "weight": 0.38,
+            "weight_type": "strong style transfer",
+            "combine_embeds": "average",
+            "start_at": 0,
+            "end_at": 0.6,
+            "embeds_scaling": "V only",
+            "model": [
+                "1",
+                0
+            ],
+            "ipadapter": [
+                "14",
+                0
+            ],
+            "image": [
+                "9",
+                0
+            ],
+            "clip_vision": [
+                "12",
+                0
+            ]
+        },
+        "class_type": "IPAdapterAdvanced",
+        "_meta": {
+            "title": "IPAdapter Advanced"
+        }
+    }
+}
