@@ -38,20 +38,14 @@ def setup_model_links():
     
     for src, dst in models_map.items():
         if os.path.exists(src):
-            # Ensure destination directory exists
             os.makedirs(os.path.dirname(dst), exist_ok=True)
-            
-            # Remove existing symlink or directory
             if os.path.exists(dst):
                 if os.path.islink(dst) or os.path.isfile(dst):
                     os.unlink(dst)
                 else:
                     os.system(f"rm -rf {dst}")
-            
-            # Create symlink
             os.symlink(src, dst)
             print(f"✅ Linked {src} -> {dst}")
-
 
 def start_comfy():
     subprocess.Popen([
@@ -89,7 +83,7 @@ def wait_for_result(prompt_id, timeout=300):
         time.sleep(2)
     raise TimeoutError("Job timed out")
 
-def get_images(result):
+def get_images_and_cleanup(result):
     images_b64 = []
     for node_output in result["outputs"].values():
         if "images" not in node_output:
@@ -98,6 +92,7 @@ def get_images(result):
             path = f"/comfyui/output/{img['filename']}"
             with open(path, "rb") as f:
                 images_b64.append(base64.b64encode(f.read()).decode())
+            os.remove(path)  # delete immediately after reading
     return images_b64
 
 def inject_inputs(workflow, job_input):
@@ -112,15 +107,21 @@ def inject_inputs(workflow, job_input):
     if "seed" in job_input:
         wf["6"]["inputs"]["seed"] = job_input["seed"]
 
+    ref_filename = None
     if "reference_image" in job_input:
         img_data = base64.b64decode(job_input["reference_image"])
-        filename = f"ref_{uuid.uuid4().hex}.png"
-        img_path = f"/comfyui/input/{filename}"
-        with open(img_path, "wb") as f:
+        ref_filename = f"ref_{uuid.uuid4().hex}.png"
+        with open(f"/comfyui/input/{ref_filename}", "wb") as f:
             f.write(img_data)
-        wf["9"]["inputs"]["image"] = filename
+        wf["9"]["inputs"]["image"] = ref_filename
 
-    return wf
+    return wf, ref_filename
+
+def cleanup_input(filename):
+    if filename:
+        path = f"/comfyui/input/{filename}"
+        if os.path.exists(path):
+            os.remove(path)
 
 # Startup
 with open("/workflow.json") as f:
@@ -132,16 +133,19 @@ wait_for_comfy()
 
 def handler(job):
     job_input = job["input"]
+    ref_filename = None
     try:
-        workflow = inject_inputs(BASE_WORKFLOW, job_input)
+        workflow, ref_filename = inject_inputs(BASE_WORKFLOW, job_input)
         prompt_id = queue_prompt(workflow)
         result = wait_for_result(prompt_id)
         if result.get("error"):
             return {"error": str(result["error"])}
-        images = get_images(result)
+        images = get_images_and_cleanup(result)
         return {"images": images}
     except Exception as e:
         return {"error": str(e)}
+    finally:
+        cleanup_input(ref_filename)
 
 runpod.serverless.start({"handler": handler})
 
