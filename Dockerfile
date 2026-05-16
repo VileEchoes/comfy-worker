@@ -23,6 +23,25 @@ RUN pip install insightface onnxruntime --no-cache-dir
 RUN mkdir -p /comfyui/input /comfyui/output /comfyui/models/checkpoints \
     /comfyui/models/clip_vision /comfyui/models/ipadapter
 
+# Bake models into the image so workers can spawn in any region (no network
+# volume needed). CIVITAI_TOKEN is provided as a BuildKit secret to keep it
+# out of the final image layers.
+RUN --mount=type=secret,id=civitai_token \
+    CIVITAI_TOKEN=$(cat /run/secrets/civitai_token) && \
+    curl -fL --retry 5 --retry-delay 5 \
+        -o /comfyui/models/checkpoints/ponyDiffusionV6XL_v6StartWithThisOne.safetensors \
+        "https://civitai.com/api/download/models/290640?type=Model&format=SafeTensor&size=pruned&fp=fp16&token=${CIVITAI_TOKEN}"
+
+RUN curl -fL --retry 5 --retry-delay 5 \
+        -o /comfyui/models/clip_vision/model.safetensors \
+        "https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/resolve/main/model.safetensors"
+
+RUN --mount=type=secret,id=civitai_token \
+    CIVITAI_TOKEN=$(cat /run/secrets/civitai_token) && \
+    curl -fL --retry 5 --retry-delay 5 \
+        -o /comfyui/models/ipadapter/ip-adapter_sdxl_vit-h.bin \
+        "https://civitai.com/api/download/models/177163?type=Model&format=Other&size=full&fp=fp32&token=${CIVITAI_TOKEN}"
+
 COPY workflow.json /workflow.json
 COPY handler.py /handler.py
 
